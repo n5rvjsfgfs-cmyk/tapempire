@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TapEmpire</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0f0f1a;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    h1 {
+      margin-top: 40px;
+    }
+
+    #energy {
+      margin-top: 20px;
+      font-size: 18px;
+      opacity: 0.8;
+    }
+
+    .button {
+      margin-top: 80px;
+      padding: 50px;
+      font-size: 28px;
+      border-radius: 25px;
+      background: #5b5bff;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <h1>TapEmpire</h1>
+  <h2 id="coins">0 EP</h2>
+  <div id="energy">⚡ Energy: 100</div>
+
+  <button class="button" onclick="tap()">TAP ⚡</button>
+
+  <script>
+    let coins = 0;
+    let energy = 100;
+
+    function tap() {
+      if (energy <= 0) return;
+
+      coins += 1;
+      energy -= 1;
+
+      document.getElementById("coins").innerText = coins + " EP";
+      document.getElementById("energy").innerText = "⚡ Energy: " + energy;
+    }
+
+    Telegram.WebApp.ready();
+  </script>
+</body>
+</html>
