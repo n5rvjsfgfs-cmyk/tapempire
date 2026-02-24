@@ -1,154 +1,317 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TapEmpire</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<title>TapEmpire</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #0f0f1a, #1a1a2e);
-      color: white;
-      text-align: center;
-      font-family: Arial, sans-serif;
-    }
+<style>
+body {
+  margin: 0;
+  background: linear-gradient(180deg,#0f0f1a,#1a1a2e);
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
 
-    h1 {
-      margin-top: 30px;
-      font-size: 28px;
-    }
+h1 { margin-top: 20px; }
 
-    .stats {
-      margin-top: 10px;
-      font-size: 18px;
-      opacity: 0.9;
-    }
+.top-bar {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+  font-size: 14px;
+}
 
-    .tap-button {
-      margin-top: 60px;
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      border: none;
-      font-size: 24px;
-      background: radial-gradient(circle, #5b5bff, #3a3aff);
-      color: white;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
+.energy-bar {
+  width: 80%;
+  height: 15px;
+  background: #222;
+  margin: 10px auto;
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-    .tap-button:active {
-      transform: scale(0.9);
-    }
+.energy-fill {
+  height: 100%;
+  background: #5bff88;
+  width: 100%;
+  transition: width 0.3s;
+}
 
-    .upgrades {
-      margin-top: 60px;
-    }
+.tap-button {
+  margin-top: 30px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: none;
+  font-size: 22px;
+  background: radial-gradient(circle,#5b5bff,#3a3aff);
+  color: white;
+  transition: transform .1s;
+}
 
-    .upgrade-btn {
-      margin: 10px;
-      padding: 15px 25px;
-      border-radius: 15px;
-      border: none;
-      background: #27293d;
-      color: white;
-      cursor: pointer;
-    }
+.tap-button:active { transform: scale(.9); }
 
-    .energy-bar {
-      width: 80%;
-      height: 20px;
-      background: #222;
-      margin: 20px auto;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+.tabs {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #111;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+}
 
-    .energy-fill {
-      height: 100%;
-      background: #5bff88;
-      width: 100%;
-      transition: width 0.3s;
-    }
-  </style>
+.tab-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+}
+
+.screen { display: none; padding-bottom: 80px; }
+.active { display: block; }
+
+.upgrade-btn {
+  margin: 10px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: none;
+  background: #27293d;
+  color: white;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>🚀 TapEmpire</h1>
+<h1>🚀 TapEmpire</h1>
 
-  <div class="stats">
-    💰 <span id="coins">0</span> EP  
-    <br>
-    ⚡ Power: <span id="power">1</span>
-  </div>
+<div class="top-bar">
+  <div>💰 <span id="coins">0</span> EP</div>
+  <div>⭐ Level <span id="level">1</span></div>
+</div>
 
-  <div class="energy-bar">
-    <div class="energy-fill" id="energyFill"></div>
-  </div>
+<div class="energy-bar">
+  <div class="energy-fill" id="energyFill"></div>
+</div>
 
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen active">
   <button class="tap-button" onclick="tap()">TAP ⚡</button>
+  <p>⚡ Power: <span id="power">1</span></p>
+  <p>⛏ Passive: <span id="passive">0</span>/sec</p>
+</div>
 
-  <div class="upgrades">
-    <button class="upgrade-btn" onclick="upgradePower()">
-      ⬆ Upgrade Power (<span id="powerPrice">50</span> EP)
-    </button>
-  </div>
+<!-- UPGRADES SCREEN -->
+<div id="upgradeScreen" class="screen">
+  <button class="upgrade-btn" onclick="upgradePower()">
+    ⬆ Power (<span id="powerPrice">50</span>)
+  </button>
 
+  <button class="upgrade-btn" onclick="upgradeEnergy()">
+    🔋 Energy (<span id="energyPrice">100</span>)
+  </button>
+
+  <button class="upgrade-btn" onclick="upgradePassive()">
+    ⛏ Auto Miner (<span id="passivePrice">200</span>)
+  </button>
+</div>
+
+<!-- STATS SCREEN -->
+<div id="statsScreen" class="screen">
+  <p>Total Earned: <span id="totalEarned">0</span></p>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn" onclick="openTab('game')">Game</button>
+  <button class="tab-btn" onclick="openTab('upgrade')">Upgrades</button>
+  <button class="tab-btn" onclick="openTab('stats')">Stats</button>
+</div>
 <script>
 
+// --------------------
+// ПЕРЕМЕННЫЕ
+// --------------------
 let coins = 0;
+let totalEarned = 0;
+
 let energy = 100;
 let maxEnergy = 100;
+
 let power = 1;
 let powerLevel = 1;
 
+let passive = 0;
+let passiveLevel = 0;
+
+let level = 1;
+
+// --------------------
+// СОХРАНЕНИЕ
+// --------------------
+function saveGame() {
+  localStorage.setItem("tapEmpireSave", JSON.stringify({
+    coins,
+    totalEarned,
+    energy,
+    maxEnergy,
+    power,
+    powerLevel,
+    passive,
+    passiveLevel,
+    level
+  }));
+}
+
+function loadGame() {
+  const save = JSON.parse(localStorage.getItem("tapEmpireSave"));
+  if (save) {
+    coins = save.coins;
+    totalEarned = save.totalEarned;
+    energy = save.energy;
+    maxEnergy = save.maxEnergy;
+    power = save.power;
+    powerLevel = save.powerLevel;
+    passive = save.passive;
+    passiveLevel = save.passiveLevel;
+    level = save.level;
+  }
+}
+
+// --------------------
+// UI
+// --------------------
 function updateUI() {
-  document.getElementById("coins").innerText = coins;
+
+  document.getElementById("coins").innerText = Math.floor(coins);
+  document.getElementById("totalEarned").innerText = Math.floor(totalEarned);
   document.getElementById("power").innerText = power;
+  document.getElementById("passive").innerText = passive;
+  document.getElementById("level").innerText = level;
 
   let percent = (energy / maxEnergy) * 100;
   document.getElementById("energyFill").style.width = percent + "%";
+
+  document.getElementById("powerPrice").innerText =
+    Math.floor(50 * Math.pow(1.6, powerLevel - 1));
+
+  document.getElementById("energyPrice").innerText =
+    Math.floor(100 * Math.pow(1.7, level - 1));
+
+  document.getElementById("passivePrice").innerText =
+    Math.floor(200 * Math.pow(1.8, passiveLevel));
 }
 
+// --------------------
+// ИГРА
+// --------------------
 function tap() {
   if (energy <= 0) return;
 
   coins += power;
+  totalEarned += power;
   energy -= 1;
 
+  checkLevel();
   updateUI();
+  saveGame();
 }
 
 function upgradePower() {
   let price = Math.floor(50 * Math.pow(1.6, powerLevel - 1));
-
   if (coins >= price) {
     coins -= price;
     power += 1;
     powerLevel += 1;
-
-    document.getElementById("powerPrice").innerText =
-      Math.floor(50 * Math.pow(1.6, powerLevel - 1));
-
     updateUI();
+    saveGame();
   }
 }
 
-// Энергия восстанавливается автоматически
+function upgradeEnergy() {
+  let price = Math.floor(100 * Math.pow(1.7, level - 1));
+  if (coins >= price) {
+    coins -= price;
+    maxEnergy += 20;
+    energy += 20;
+    updateUI();
+    saveGame();
+  }
+}
+
+function upgradePassive() {
+  let price = Math.floor(200 * Math.pow(1.8, passiveLevel));
+  if (coins >= price) {
+    coins -= price;
+    passive += 1;
+    passiveLevel += 1;
+    updateUI();
+    saveGame();
+  }
+}
+
+// --------------------
+// УРОВНИ
+// --------------------
+function checkLevel() {
+  let newLevel = Math.floor(totalEarned / 1000) + 1;
+  if (newLevel > level) {
+    level = newLevel;
+  }
+}
+
+// --------------------
+// АВТО РЕГЕН
+// --------------------
 setInterval(() => {
   if (energy < maxEnergy) {
     energy += 1;
-    updateUI();
   }
 }, 2000);
 
-updateUI();
+// --------------------
+// ПАССИВ ДОХОД
+// --------------------
+setInterval(() => {
+  if (passive > 0) {
+    coins += passive;
+    totalEarned += passive;
+    checkLevel();
+    updateUI();
+    saveGame();
+  }
+}, 1000);
 
+// --------------------
+// ВКЛАДКИ
+// --------------------
+function openTab(tab) {
+  document.getElementById("gameScreen").classList.remove("active");
+  document.getElementById("upgradeScreen").classList.remove("active");
+  document.getElementById("statsScreen").classList.remove("active");
+
+  if (tab === "game") {
+    document.getElementById("gameScreen").classList.add("active");
+  }
+
+  if (tab === "upgrade") {
+    document.getElementById("upgradeScreen").classList.add("active");
+  }
+
+  if (tab === "stats") {
+    document.getElementById("statsScreen").classList.add("active");
+  }
+}
+
+// --------------------
+// СТАРТ
+// --------------------
+loadGame();
+updateUI();
 Telegram.WebApp.ready();
 
 </script>
-
 </body>
 </html>
