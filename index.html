@@ -4,63 +4,151 @@
   <meta charset="UTF-8">
   <title>TapEmpire</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     body {
       margin: 0;
-      background: #0f0f1a;
+      background: linear-gradient(180deg, #0f0f1a, #1a1a2e);
       color: white;
       text-align: center;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
     }
 
     h1 {
-      margin-top: 40px;
-    }
-
-    #energy {
-      margin-top: 20px;
-      font-size: 18px;
-      opacity: 0.8;
-    }
-
-    .button {
-      margin-top: 80px;
-      padding: 50px;
+      margin-top: 30px;
       font-size: 28px;
-      border-radius: 25px;
-      background: #5b5bff;
+    }
+
+    .stats {
+      margin-top: 10px;
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .tap-button {
+      margin-top: 60px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
       border: none;
+      font-size: 24px;
+      background: radial-gradient(circle, #5b5bff, #3a3aff);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .tap-button:active {
+      transform: scale(0.9);
+    }
+
+    .upgrades {
+      margin-top: 60px;
+    }
+
+    .upgrade-btn {
+      margin: 10px;
+      padding: 15px 25px;
+      border-radius: 15px;
+      border: none;
+      background: #27293d;
       color: white;
       cursor: pointer;
     }
 
-    .button:active {
-      transform: scale(0.95);
+    .energy-bar {
+      width: 80%;
+      height: 20px;
+      background: #222;
+      margin: 20px auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .energy-fill {
+      height: 100%;
+      background: #5bff88;
+      width: 100%;
+      transition: width 0.3s;
     }
   </style>
 </head>
+
 <body>
-  <h1>TapEmpire</h1>
-  <h2 id="coins">0 EP</h2>
-  <div id="energy">⚡ Energy: 100</div>
 
-  <button class="button" onclick="tap()">TAP ⚡</button>
+  <h1>🚀 TapEmpire</h1>
 
-  <script>
-    let coins = 0;
-    let energy = 100;
+  <div class="stats">
+    💰 <span id="coins">0</span> EP  
+    <br>
+    ⚡ Power: <span id="power">1</span>
+  </div>
 
-    function tap() {
-      if (energy <= 0) return;
+  <div class="energy-bar">
+    <div class="energy-fill" id="energyFill"></div>
+  </div>
 
-      coins += 1;
-      energy -= 1;
+  <button class="tap-button" onclick="tap()">TAP ⚡</button>
 
-      document.getElementById("coins").innerText = coins + " EP";
-      document.getElementById("energy").innerText = "⚡ Energy: " + energy;
-    }
+  <div class="upgrades">
+    <button class="upgrade-btn" onclick="upgradePower()">
+      ⬆ Upgrade Power (<span id="powerPrice">50</span> EP)
+    </button>
+  </div>
 
-    Telegram.WebApp.ready();
-  </script>
+<script>
+
+let coins = 0;
+let energy = 100;
+let maxEnergy = 100;
+let power = 1;
+let powerLevel = 1;
+
+function updateUI() {
+  document.getElementById("coins").innerText = coins;
+  document.getElementById("power").innerText = power;
+
+  let percent = (energy / maxEnergy) * 100;
+  document.getElementById("energyFill").style.width = percent + "%";
+}
+
+function tap() {
+  if (energy <= 0) return;
+
+  coins += power;
+  energy -= 1;
+
+  updateUI();
+}
+
+function upgradePower() {
+  let price = Math.floor(50 * Math.pow(1.6, powerLevel - 1));
+
+  if (coins >= price) {
+    coins -= price;
+    power += 1;
+    powerLevel += 1;
+
+    document.getElementById("powerPrice").innerText =
+      Math.floor(50 * Math.pow(1.6, powerLevel - 1));
+
+    updateUI();
+  }
+}
+
+// Энергия восстанавливается автоматически
+setInterval(() => {
+  if (energy < maxEnergy) {
+    energy += 1;
+    updateUI();
+  }
+}, 2000);
+
+updateUI();
+
+Telegram.WebApp.ready();
+
+</script>
+
 </body>
 </html>
